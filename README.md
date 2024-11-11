@@ -1,8 +1,14 @@
-# eQTL_manuscript
-The code and analysis for the eQTL project
+# eQTL Manuscript
 
-### The eQTL analysis part is in Degree_project repository
-### Other downstream analysis part is in This repository
+This repository contains the code and analysis for the eQTL project, with a focus on downstream analyses. For the eQTL analysis itself, please refer to the **[Degree_project repository](https://github.com/yourusername/Degree_project)**.
 
-## main analysis performed on the JP cohort:
-''
+## Project Overview
+
+This repository includes additional downstream analyses conducted on different cohorts as part of the eQTL manuscript project. 
+
+### Cohorts and Analyses
+
+- **JP Cohort**: Main downstream analysis for the JP cohort can be found in `survival_analysis_all_2024.R`.
+- **TCGA Cohort**: Main downstream analysis for the TCGA cohort can be found in `survival_analysis_all_TCGA_2024.R`.
+
+
