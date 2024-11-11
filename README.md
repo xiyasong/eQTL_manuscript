@@ -1,6 +1,6 @@
 # eQTL Manuscript
 
-This repository contains the code and analysis for the eQTL project, with a focus on downstream analyses. For the eQTL analysis itself, please refer to the **[Degree_project repository](https://github.com/yourusername/Degree_project)**.
+This repository contains the code and analysis for the eQTL project, with a focus on downstream analyses. For the eQTL analysis itself, please refer to the **[Degree_project](https://github.com/xiyasong/Degree_project)**.
 
 ## Project Overview
 
