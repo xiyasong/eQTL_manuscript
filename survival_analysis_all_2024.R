@@ -128,6 +128,8 @@ display_venn(
 
 
 # 3.2 Union_resuts dataset
+fdr_eGene <- cox_0.05_annotated[cox_0.05_annotated$FDR < 0.05,]
+fdr_eGene_adjusted <- cox_0.05_adjusted[cox_0.05_adjusted$FDR < 0.05,]
 union_result <- union(cox_0.05_adjusted$gene,cox_0.05$gene)%>% as.data.frame()
 colnames(union_result) <- "gene"
 
@@ -168,18 +170,18 @@ print(genes_with_different_signs)
 #annotate the gene name 
 
 union_result$simple_gene_id <- sapply(strsplit(union_result$gene,'\\.'),'[',1)
-ensembl <- useEnsembl(biomart = "ensembl", 
-                      dataset = "hsapiens_gene_ensembl", 
-                      mirror = "useast")
-list <- getBM(attributes=c('gene_biotype','ensembl_gene_id','external_gene_name'), 
-              filters = 'ensembl_gene_id',
-              values = union_result$simple_gene_id, mart = ensembl)
+#ensembl <- useEnsembl(biomart = "ensembl", 
+#                      dataset = "hsapiens_gene_ensembl", 
+#                      mirror = "useast")
+#list <- getBM(attributes=c('gene_biotype','ensembl_gene_id','external_gene_name'), 
+##              filters = 'ensembl_gene_id',
+#              values = union_result$simple_gene_id, mart = ensembl)
 
-# left 187 eGenes after KM removal
+# left 187 eGenes after KM removal ,,,
 union_result <- union_result %>%
   filter(!gene %in% genes_with_different_signs$gene)
 dim(union_result)
-
+#[1] 187  7
 
 ### How many fav/unfavorable:114 TRUE, 74 FALSE =================
 # select the cox1 model coef, as representative, and for cox only variants, select the cox2 coef model
@@ -211,8 +213,15 @@ for (row in 1:nrow(union_result)) {
   }
 }
 ### Supp_table 6 new --------------------
-
-openxlsx::write.xlsx(union_result,"/Users/xiyas/eQTL-continue/Manuscript_Systematically_identification/eQTL_manuscript/All_Supple_Materials/Supplementary_table5_Cox_significant_eGenes.xlsx", sheetName = "Cox_adjusted_unadjusted", 
+### wrote union_result
+union_result$gene_name <- signif_egenes$gene_name[match(union_result$gene, signif_egenes$gene_id)]
+dim(union_result)
+#[1] 187  11
+colnames(union_result)
+#[1] "gene"                  "COX_coef_univariate"   "P_univariate"          "COX_coef_multivariate" "P_multivariate"       
+#[6] "different_signs"       "simple_gene_id"        "overall_coef"          "marker"                "gene_biotype"         
+#[11] "gene_name"     
+openxlsx::write.xlsx(union_result,"/Users/xiyas/eQTL-continue/Manuscript_Systematically_identification/eQTL_manuscript_1119/PLOS_Revise1/Supplementary_Materials/Supplementary_table5_Cox_significant_eGenes.xlsx", sheetName = "Cox_adjusted&unadjusted", 
      colNames = TRUE, rowNames = FALSE)
 
 ### GO term analysis: no significant overlaps =======================
@@ -470,7 +479,7 @@ cox_result=summary(coxph(Surv(survival[,2], survival[,1]) ~
 #coef=as.matrix(cox_result$coefficients)[1,"coef"]
 #p=as.matrix(cox_result$coefficients)[1,"Pr(>|z|)"]
 
-### 4.5.2 176 is old eQTLs from previous results, 
+### 4.5.2 176 is old eQTLs from previous results, not used ------------------
 # if only categorical variables and first level of P value is in cox_p_0.05, and also this 176 variants result didn't remove the low genotypes counts
 #setdiff(cox_p_0.05$genotype,sig_cox_results[sig_cox_results$P_categorical_het <0.05,]$genotype)
 #[1] "chr1_145888034_T_G" "chr1_150260371_T_C" "chr1_157747046_T_G" "chr1_157767141_C_T" "chr1_157778492_C_T" "chr1_157797616_T_G" "chr1_157798395_T_C"
@@ -493,7 +502,7 @@ cox_0.001 <- filter(target, P <= 0.001)
 write.table(target,file="target_one_cox_in_TCGA.txt",sep="\t",row.names=F,col.names=T,quote=F)
 
 
-# 4.5.3 NOT ADJUSTED Get sig_cox_results without adjust tumor grade: A new cox code which test both categorical and numeric value in SNP ========================
+## 4.5.3 NOT ADJUSTED Get sig_cox_results without adjust tumor grade: A new cox code which test both categorical and numeric value in SNP ========================
 
 # Initialize lists to store results
 coef_list_additive <- c()
@@ -578,6 +587,8 @@ colnames(cox_table)[c(8:10)] = c('LRT_pvalue','Wald_pvalue','Logrank_pvalue')
 #### Remove few genotype less than 3 individulas  ========================
 ##### 4558 left 4497 snps
 cox_table <- cox_table %>% filter(!genotype %in% snps_with_few_genotype)
+dim(cox_table)
+#[1] 4497   10
 ## make a plot by plot_3_p_value
 #? so which p-value in the whole model test should used? > wald test
 
@@ -713,7 +724,7 @@ sig_cox_results_adjusted <- cox_table_adjusted[(!is.na(cox_table_adjusted$P_addi
 
 
 #  531 sig_cox_results_adjusted 
-dim(sig_cox_results)
+#dim(sig_cox_results)
 dim(sig_cox_results_adjusted)
 # compare the results
 num_significant_additive <- sum(!is.na(sig_cox_results$P_additive) & sig_cox_results$P_additive < 0.05)
@@ -740,6 +751,8 @@ union_variant_result <- merge(union_variant_result,sig_cox_results,by = "genotyp
 union_variant_result <- merge(union_variant_result, sig_cox_results_adjusted, by = "genotype", all.x = TRUE)
 colnames(union_variant_result)
 dim(union_variant_result)
+#> dim(union_variant_result)
+#[1] 711  19
 # Rename the columns from sig_cox_results_adjusted to indicate adjusted values
 adjusted_columns <- colnames(sig_cox_results_adjusted)[-1] # exclude the genotype column
 new_adjusted_columns <- paste0(adjusted_columns, "_adjusted")
@@ -865,7 +878,7 @@ dim(union_variant_result)
 
 # 7. JP Find final consensus eqtl-egene pairs ================================
 # both significant on gene and eqtl level
-# union_variant_results: 388 variants
+# union_variant_results: 388 variants >>>>>>>>>>>>>>>>.???????????????????????????
 # get the target_pairs, that is the variants that is the eqtl for the eGenes and meanwhile have direct prognostic effect on JP
 
 target_pairs <- signif_pairs %>% filter(variant_id %in% union_variant_result$genotype) %>% 
@@ -878,8 +891,8 @@ colnames(target_pairs)[2]<- "genotype"
 #colnames(union_variant_result)[4] <- "genotype_overall_coef"
 target_pairs <- merge(target_pairs,union_variant_result,by='genotype',all.x = TRUE)
 dim(target_pairs)
+#[1] 356  43
 # ===356 pairs now,start to further slopes filtering
-
 #union_variant_result$overall_coef <- ifelse(is.na(union_variant_result$genotype_coef), union_variant_result$genotype_COX_coef,
 #                                            union_variant_result$genotype_coef)
 
@@ -932,6 +945,7 @@ dim(filtered_target_pairs)
 
 length(unique(filtered_target_pairs$genotype))
 length(unique(filtered_target_pairs$gene_id))
+length(unique(filtered_target_pairs$gene_name))
 #223 and 54
 # 534 pairs 2024.6 and 223 target snps,94 target eGenes
 # after removing KM results: 54 eggenes with 223 eqtls within 329 pairs
@@ -1045,7 +1059,7 @@ pie(biotype_freq,
 
 ## 8.1.Capture the target variants from joint-calling VCF,by python file "joint-calling-target-capture-and-new-id.ipynb" =================
 #  writeLines(unique(filtered_target_pairs$genotype), '/Users/xiyas/eQTL-continue/joint-calling/target_snp_202406.txt')
-# 386 eQTLs
+# 386 eQTLs,???
 
 ## 8.2 Read target vcf data and clean/fomat the data ========================
 
@@ -1055,6 +1069,7 @@ vcf_data_test <- as.data.frame(vcf_data_test)
 #vcf_data_test %>% select("V17")
 
 # Separate each column, keeping only those ending with "_genotype"
+library(purrr)
 vcf_data_final_test = names(vcf_data_test) %>%
   map(
     function(x) 
@@ -1099,21 +1114,21 @@ vcf_data_final_test$chr10_80032006_T_C == TCGA_combined_surv_genotype$chr10_8003
 vcf_data_final_test$chr11_206089_G_A == TCGA_combined_surv_genotype$chr11_206089_G_A
 
 #removed KM analysis for both gene and variatns version
-### Filter columns of vcf+inal_test based on matching genotypes
+### Filter columns of vcf+inal_test based on matching genotypes -------------------
 
 vcf_data_final_test <- vcf_data_final_test[, colnames(vcf_data_final_test) %in% unique(filtered_target_pairs$genotype)]
-dim(vcf_data_final_test)
-#[1] 287 209
-target_snp <- unique(filtered_target_pairs$genotype)
-intersect(target_snp, colnames(TCGA_combined_surv_genotype))
 
+target_snp <- unique(filtered_target_pairs$genotype)
+#intersect(target_snp, colnames(TCGA_combined_surv_genotype))
+intersect(target_snp, colnames(vcf_data_final_test))
+#209
 dim(vcf_data_final_test)
 # [1] 287 362
 dim(TCGA_combined_surv_genotype)
 # [1] 287 130
 TCGA_combined_surv_genotype$Row.names
 colnames(vcf_data_final_test)
-View(vcf_data_final_test)
+#View(vcf_data_final_test)
 rownames(vcf_data_final_test)
 #rownames(vcf_data_final_test) <- sapply(strsplit(rownames(vcf_data_final_test), "-"), function(x) paste(x[1:3], collapse = "-"))
 # Print the modified row names

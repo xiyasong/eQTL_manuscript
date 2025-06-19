@@ -2,7 +2,7 @@
 #combined_surv_genotype <- read.table("ccRCC_genotype_tpm_target_gene_exp.txt",sep="\t",header = TRUE)
 
 ##8.4 retrive the TCGA clinical data =======================================================
-clinical_data_TCGA <-read.csv("/Users/xiyas/eQTL-continue/eQTL-continue-TCGA_survival_matched-analysis/TCGA_KIRC_clinical_data.txt",fill = TRUE,sep = "\t")
+clinical_data_TCGA <-read.csv("/Users/xiyas/eQTL-continue/eQTL-continue-survival-analysis/TCGA_KIRC_clinical_data.txt",fill = TRUE,sep = "\t")
 needed_col <- c("bcr_patient_barcode","gender","race","ajcc_pathologic_t","stage_event_tnm_categories","vital_status","age_at_index","days_to_last_follow_up","days_to_death")
 
 clinical_data_TCGA_clean <- clinical_data_TCGA[,colnames(clinical_data_TCGA) %in% needed_col] 
@@ -10,7 +10,8 @@ clinical_data_TCGA_clean$LivingDays = clinical_data_TCGA_clean$days_to_last_foll
 clinical_data_TCGA_clean$LivingDays[clinical_data_TCGA_clean$vital_status == "dead"] = 
   clinical_data_TCGA_clean$days_to_death[clinical_data_TCGA_clean$vital_status == "dead"]
 
-rownames(clinical_data_TCGA_clean) <- clinical_data_TCGA_clean$`sample ID`
+#rownames(clinical_data_TCGA_clean) <- clinical_data_TCGA_clean$`sample ID`
+rownames(clinical_data_TCGA_clean) <- clinical_data_TCGA_clean$bcr_patient_barcode
 new_TCGA_combined_surv_genotype <- merge(clinical_data_TCGA_clean,vcf_data_final_test,by = "row.names",all.x = FALSE)
 
 #> dim(new_TCGA_combined_surv_genotype)
@@ -471,11 +472,11 @@ merged_cohort_results$satisfied_models <- sapply(results, function(x) paste(x$mo
 true_variants <- merged_cohort_results %>% filter(same_effect_multiple == TRUE)
 
 # 12.We should get [final_paris] metaanalysis significant signal on both variant and gene lever right ? --------------------
-#final_pairs <- signif_pairs %>%  filter(variant_id %in% true_variants$genotype)
-#final_pairs$gene_prognosis <- final_pairs$gene_id %in% filtered_target_pairs$gene_id
-#final_pairs <- final_pairs[final_pairs$gene_prognosis == TRUE,]
-#dim(final_pairs)
-
+final_pairs <- signif_pairs %>%  filter(variant_id %in% true_variants$genotype)
+final_pairs$gene_prognosis <- final_pairs$gene_id %in% filtered_target_pairs$gene_id
+final_pairs <- final_pairs[final_pairs$gene_prognosis == TRUE,]
+dim(final_pairs)
+####### if you get 36 is because you included KM variants.
 # 25 13 (before moved KM gene and KM variants: 36)
 # test method 2:
 final_pairs <- filtered_target_pairs %>%  filter(genotype %in% true_variants$genotype)
@@ -666,3 +667,5 @@ result_table <- result_table %>%
 dim(result_table)
 print(result_table)
 write.table(result_table,row.names = FALSE,file = "/Users/xiyas/eQTL-continue/eQTL-continue-survival-analysis/LDassoc_result_table.txt",quote = FALSE)
+
+
